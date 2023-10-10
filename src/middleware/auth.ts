@@ -1,4 +1,15 @@
-import {kv} from "@vercel/kv";
+import {createClient} from 'redis';
+import 'dotenv/config'
+
+require('dotenv').config()
+
+const client = createClient({
+    password: process.env.REDIS_PASSWORD,
+    socket: {
+        host: process.env.REDIS_URL,
+        port: 14117
+    }
+});
 
 function generateToken(length: number) {
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -11,11 +22,22 @@ function generateToken(length: number) {
 }
 
 export async function GetToken(mail: string) {
-    return await kv.get(mail)
+    await client.connect()
+    let token = await client.get(mail)
+    await client.disconnect()
+    return token
 }
 
 export async function PostToken(mail: string) {
+    await client.connect()
+    let old_token = await client.get(mail)
+    console.log(old_token)
+    if (old_token) {
+        await client.disconnect()
+        return old_token
+    }
     let token = generateToken(32)
-    await kv.set(token, mail)
+    await client.set(mail, token)
+    await client.disconnect()
     return token
 }

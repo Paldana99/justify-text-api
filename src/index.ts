@@ -1,5 +1,8 @@
 import express, {Express, Request, Response} from 'express';
 import bodyParser from "body-parser";
+import 'dotenv/config'
+
+require('dotenv').config()
 
 //routes for the justify API
 const justifyRoute = require('./routes/justify')
