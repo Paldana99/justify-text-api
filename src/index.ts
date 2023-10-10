@@ -9,7 +9,7 @@ const port = '8080';
 
 const app: Express = express();
 
-app.use(bodyParser.json({ limit: "80mb" }));
+app.use(bodyParser.text());
 app.use(bodyParser.urlencoded({ limit: "80mb", extended: true }));
 
 app.get('/', (req: Request, res: Response) => {
