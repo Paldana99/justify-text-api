@@ -34,13 +34,22 @@ export async function GetToken(mail: string) {
 async function PostToken(mail: string) {
     await client.connect()
     let old_token = await client.get(mail)
+    // If toke exist already, then we recover that one
     if (old_token) {
         await client.disconnect()
         return old_token
     }
     let token = generateToken(32)
     await client.set(mail, token)
-    await client.set(token, 0)
+
+    // See how many second until the end of the day
+    const now = new Date();
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999); // Set to 23:59:59.999
+    const millisecondsUntilEndOfDay = endOfDay.getTime() - now.getTime();
+    const secondsUntilEndOfDay = Math.floor(millisecondsUntilEndOfDay / 1000);
+    // Set a new count for that token
+    await client.set(token, 0, {'EX': secondsUntilEndOfDay})
     await client.disconnect()
     return token
 }
@@ -61,12 +70,12 @@ export async function UpdateCount(token: string, newCount: number) {
 const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     let token: string | undefined = req.headers['token'] as string | undefined
     if (!token) {
-        res.status(400).json({error: 'Token is missing'});
+        res.status(401).json({error: 'Token is missing'});
         return
     }
     GetCount(token).then((count) => {
         if (count == null) {
-            res.status(400).json({error: 'Token is missing'})
+            res.status(401).json({error: 'Token is missing'})
             return
         }
         let numberChars: number = req.body.length
