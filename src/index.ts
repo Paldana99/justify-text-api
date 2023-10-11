@@ -12,17 +12,15 @@ const port = process.env.PORT || '8080';
 
 const app: Express = express();
 
-app.use(bodyParser.text());
-app.use(bodyParser.urlencoded({limit: "80mb", extended: true}));
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Express + TypeScript Server');
 });
 
-
-app.use('/api/justify', justifyRoute)
 app.use(express.json())
 app.use('/api/token', authRoute)
+app.use(bodyParser.text());
+app.use('/api/justify', justifyRoute)
 
 app.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}!`);

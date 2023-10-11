@@ -1,7 +1,8 @@
 import express, {Request, Response} from 'express';
-import {GetToken, PostToken} from "../middleware/auth";
+import {GetToken} from "../middleware/auth";
 
 const router = express.Router()
+const PostToken = require('../middleware/auth').PostToken
 
 // get
 router.get("/", function (req: Request, res: Response) {
@@ -22,7 +23,7 @@ router.post("/", function (req: Request, res: Response) {
     if (!mail) {
         return res.status(401).send("Bad request: No mail in body")
     }
-    PostToken(mail).then((token) => {
+    PostToken(mail).then((token: any) => {
         return res.send(token)
     })
 
