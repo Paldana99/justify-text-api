@@ -25,3 +25,5 @@ app.use('/api/justify', justifyRoute)
 app.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}!`);
 });
+
+module.exports = app
