@@ -22,8 +22,10 @@ app.use('/api/token', authRoute)
 app.use(bodyParser.text());
 app.use('/api/justify', justifyRoute)
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}!`);
 });
 
-module.exports = app
+module.exports = {
+    server
+}

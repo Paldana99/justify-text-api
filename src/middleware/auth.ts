@@ -1,11 +1,10 @@
-import {createClient} from 'redis';
 import {NextFunction, Request, Response} from 'express';
 import 'dotenv/config'
+import {createClient} from "redis";
 
 require('dotenv').config()
 
 const MAXIMUM_CHAR_REQUEST: number = 80000
-
 const client = createClient({
     password: process.env.REDIS_PASSWORD,
     socket: {
@@ -13,6 +12,11 @@ const client = createClient({
         port: 14117
     }
 });
+
+(async () => {
+    client.on("error", (error: any) => console.error(`Ups : ${error}`));
+    await client.connect();
+})();
 
 function generateToken(length: number) {
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -24,19 +28,14 @@ function generateToken(length: number) {
     return token;
 }
 
-export async function GetToken(mail: string) {
-    await client.connect()
-    let token = await client.get(mail)
-    await client.disconnect()
-    return token
+async function GetToken(mail: string) {
+    return await client.get(mail)
 }
 
 async function PostToken(mail: string) {
-    await client.connect()
     let old_token = await client.get(mail)
     // If toke exist already, then we recover that one
     if (old_token) {
-        await client.disconnect()
         return old_token
     }
     let token = generateToken(32)
@@ -48,23 +47,16 @@ async function PostToken(mail: string) {
     endOfDay.setHours(23, 59, 59, 999); // Set to 23:59:59.999
     const millisecondsUntilEndOfDay = endOfDay.getTime() - now.getTime();
     const secondsUntilEndOfDay = Math.floor(millisecondsUntilEndOfDay / 1000);
-    // Set a new count for that token
     await client.set(token, 0, {'EX': secondsUntilEndOfDay})
-    await client.disconnect()
     return token
 }
 
 export async function GetCount(token: string) {
-    await client.connect()
-    let count = parseInt(<string>await client.get(token));
-    await client.disconnect()
-    return count
+    return parseInt(<string>await client.get(token))
 }
 
 export async function UpdateCount(token: string, newCount: number) {
-    await client.connect()
     await client.set(token, newCount)
-    await client.disconnect()
 }
 
 const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
@@ -92,5 +84,6 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
 
 module.exports = {
     authMiddleware,
-    PostToken
+    PostToken,
+    GetToken
 }
